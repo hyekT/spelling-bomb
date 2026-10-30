@@ -436,7 +436,7 @@ function beginTurn() {
 
 /* ---------- 입력 처리 ---------- */
 function penalty(msg) {
-  G.t = Math.max(0.3, G.t - CONFIG.wrongPenalty);
+  G.t = Math.max(Math.min(G.t, 0.3), G.t - CONFIG.wrongPenalty);   // 이미 0.3초 이하면 시간을 되돌리지 않는다 (연타로 시간이 늘어나던 버그)
   G.wrong++; G.players[G.cur].combo = 0;
   sfx.bad(); shake();
   renderMsg('<span class="bad">✗ ' + msg + ' (시간 -' + CONFIG.wrongPenalty + '초)</span>');
