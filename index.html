@@ -88,6 +88,7 @@ h2{margin:0 0 8px;font-size:26px}
 .names input{flex:1;min-width:100px;background:#f3f6ff;border:2px solid var(--line);border-radius:10px;padding:6px 10px;color:var(--ink);font:inherit;font-weight:700;-webkit-user-select:text;user-select:text}
 .chips{display:flex;gap:7px;flex-wrap:wrap;margin:4px 0}
 .chips button{background:var(--panel2);border:2px solid var(--line);border-radius:12px;padding:6px 11px;font-weight:800;font-size:14px;text-align:left}
+.chips button:disabled{opacity:.4;cursor:default;box-shadow:none;transform:none}
 .chips button small{display:block;color:var(--mute);font-weight:600;font-size:11.5px}
 .chips button.on{border-color:var(--acc);background:#fff0d1}
 .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;align-items:center}
@@ -147,12 +148,14 @@ kbd{background:#dfe6ff;border-radius:5px;padding:1px 6px;color:#363b78;font-size
       <div class="lab">② 방식</div>
       <div class="seg" id="segMode"></div>
       <div class="dd" id="ddMode"></div>
+      <div class="lab">③ 단어 레벨</div>
+      <div class="chips" id="chipLevels"></div>
     </div>
     <div>
-      <div class="lab">③ 난이도</div>
+      <div class="lab">④ 난이도</div>
       <div class="seg" id="segDiff"></div>
       <div class="dd" id="ddDiff"></div>
-      <div class="lab">④ 단어 세트</div>
+      <div class="lab">⑤ 단어 세트</div>
       <div class="chips" id="chipSets"></div>
     </div>
   </div>
@@ -221,6 +224,15 @@ const SETS = [
   { id: '4', title: 'Lesson 4-2', sub: 'p.86–88 · 자연의 해결책' },
   { id: 'all', title: '전체 섞기', sub: '3~4과 모든 단어' }
 ];
+/* 단어 레벨: 글자 수로 나눠요 (min~max 글자). 숫자를 고치면 기준이 바뀌어요. */
+const LEVELS = [
+  { id: 'all', label: '전체', min: 1, max: 99 },
+  { id: '1', label: '기초', min: 4, max: 6 },
+  { id: '2', label: '중급', min: 7, max: 8 },
+  { id: '3', label: '심화', min: 9, max: 99 }
+];
+const levelOf = id => LEVELS.find(l => l.id === id) || LEVELS[0];
+const levelDesc = l => l.id === 'all' ? '모든 길이' : (l.max >= 99 ? l.min + '글자 이상' : l.min === l.max ? l.min + '글자' : l.min + '~' + l.max + '글자');
 const WORDS = [
   /* Lesson 3-1 */
   { s: 1, w: 'publish', ko: '출판하다', pos: '동' },
@@ -239,6 +251,20 @@ const WORDS = [
   { s: 1, w: 'legend', ko: '전설', pos: '명' },
   { s: 1, w: 'instrument', ko: '악기, 도구', pos: '명' },
   { s: 1, w: 'approximately', ko: '대략, 약', pos: '부' },
+  { s: 1, w: 'writer', ko: '작가', pos: '명' },
+  { s: 1, w: 'grandmother', ko: '할머니', pos: '명' },
+  { s: 1, w: 'award', ko: '상, 수상', pos: '명' },
+  { s: 1, w: 'interest', ko: '흥미, 관심', pos: '명' },
+  { s: 1, w: 'related', ko: '관련된', pos: '형' },
+  { s: 1, w: 'hunting', ko: '사냥', pos: '명' },
+  { s: 1, w: 'aspect', ko: '측면', pos: '명' },
+  { s: 1, w: 'include', ko: '포함하다', pos: '동' },
+  { s: 1, w: 'animal', ko: '동물', pos: '명' },
+  { s: 1, w: 'musical', ko: '음악의, 음악적인', pos: '형' },
+  { s: 1, w: 'rock', ko: '바위', pos: '명' },
+  { s: 1, w: 'country', ko: '나라', pos: '명' },
+  { s: 1, w: 'children', ko: '아이들', pos: '명' },
+  { s: 1, w: 'feature', ko: '~을 특징으로 하다, 등장시키다', pos: '동' },
   /* Lesson 3-2 */
   { s: 2, w: 'positive', ko: '긍정적인', pos: '형' },
   { s: 2, w: 'foolish', ko: '어리석은', pos: '형' },
@@ -257,6 +283,19 @@ const WORDS = [
   { s: 2, w: 'deny', ko: '부정하다', pos: '동' },
   { s: 2, w: 'museum', ko: '박물관', pos: '명' },
   { s: 2, w: 'mention', ko: '언급하다', pos: '동' },
+  { s: 2, w: 'human', ko: '인간', pos: '명' },
+  { s: 2, w: 'scary', ko: '무서운', pos: '형' },
+  { s: 2, w: 'conflicting', ko: '상충되는', pos: '형' },
+  { s: 2, w: 'population', ko: '개체 수, 인구', pos: '명' },
+  { s: 2, w: 'nation', ko: '국가', pos: '명' },
+  { s: 2, w: 'disappearance', ko: '사라짐, 소멸', pos: '명' },
+  { s: 2, w: 'represent', ko: '상징하다, 대표하다', pos: '동' },
+  { s: 2, w: 'consider', ko: '여기다, 고려하다', pos: '동' },
+  { s: 2, w: 'traditional', ko: '전통적인', pos: '형' },
+  { s: 2, w: 'wild', ko: '야생의', pos: '형' },
+  { s: 2, w: 'collect', ko: '모으다', pos: '동' },
+  { s: 2, w: 'worldwide', ko: '세계적인, 전 세계의', pos: '형' },
+  { s: 2, w: 'character', ko: '등장인물, 캐릭터', pos: '명' },
   /* Lesson 4-1 */
   { s: 3, w: 'environment', ko: '환경', pos: '명' },
   { s: 3, w: 'planet', ko: '행성, 지구', pos: '명' },
@@ -275,6 +314,19 @@ const WORDS = [
   { s: 3, w: 'species', ko: '(생물의) 종', pos: '명' },
   { s: 3, w: 'larvae', ko: '유충', pos: '명' },
   { s: 3, w: 'beetle', ko: '딱정벌레', pos: '명' },
+  { s: 3, w: 'climate', ko: '기후', pos: '명' },
+  { s: 3, w: 'forest', ko: '숲', pos: '명' },
+  { s: 3, w: 'mountain', ko: '산', pos: '명' },
+  { s: 3, w: 'dangerous', ko: '위험한', pos: '형' },
+  { s: 3, w: 'achieve', ko: '달성하다', pos: '동' },
+  { s: 3, w: 'produce', ko: '생산하다', pos: '동' },
+  { s: 3, w: 'reduce', ko: '줄이다', pos: '동' },
+  { s: 3, w: 'ocean', ko: '바다', pos: '명' },
+  { s: 3, w: 'marine', ko: '해양의', pos: '형' },
+  { s: 3, w: 'scientist', ko: '과학자', pos: '명' },
+  { s: 3, w: 'amount', ko: '양', pos: '명' },
+  { s: 3, w: 'dump', ko: '내버리다', pos: '동' },
+  { s: 3, w: 'provide', ko: '제공하다', pos: '동' },
   /* Lesson 4-2 */
   { s: 4, w: 'bacteria', ko: '박테리아, 세균', pos: '명' },
   { s: 4, w: 'mealworm', ko: '밀웜(갈색거저리 유충)', pos: '명' },
@@ -293,7 +345,19 @@ const WORDS = [
   { s: 4, w: 'renewable', ko: '재생 가능한', pos: '형' },
   { s: 4, w: 'sustainable', ko: '지속 가능한', pos: '형' },
   { s: 4, w: 'nutrient', ko: '영양분', pos: '명' },
-  { s: 4, w: 'expose', ko: '노출시키다', pos: '동' }
+  { s: 4, w: 'expose', ko: '노출시키다', pos: '동' },
+  { s: 4, w: 'mining', ko: '광업', pos: '명' },
+  { s: 4, w: 'polluted', ko: '오염된', pos: '형' },
+  { s: 4, w: 'purify', ko: '정화하다', pos: '동' },
+  { s: 4, w: 'expensive', ko: '비싼', pos: '형' },
+  { s: 4, w: 'extensive', ko: '광범위한', pos: '형' },
+  { s: 4, w: 'harmful', ko: '해로운', pos: '형' },
+  { s: 4, w: 'material', ko: '물질', pos: '명' },
+  { s: 4, w: 'research', ko: '연구', pos: '명' },
+  { s: 4, w: 'statistics', ko: '통계(자료)', pos: '명' },
+  { s: 4, w: 'generate', ko: '발생시키다', pos: '동' },
+  { s: 4, w: 'eventually', ko: '마침내, 결국', pos: '부' },
+  { s: 4, w: 'explore', ko: '탐구하다', pos: '동' }
 ];
 
 /* 난이도: "얼마나 도와주는가"로 나눕니다 (퓨즈 시간은 난이도와 상관없이 단어 길이로만 정해져요) */
@@ -330,10 +394,11 @@ const S = {
   rounds: SV.rounds || CONFIG.roundWordsDefault,
   diff: DIFF[SV.diff] ? SV.diff : 'normal',
   set: SETS.some(x => x.id === SV.set) ? SV.set : '1',
+  level: LEVELS.some(x => x.id === SV.level) ? SV.level : 'all',
   sfx: SV.sfx ?? CONFIG.sfx,
   tts: SV.tts ?? CONFIG.tts
 };
-function saveSettings() { store.d.set = { players: S.players, names: S.names, mode: S.mode, rounds: S.rounds, diff: S.diff, set: S.set, sfx: S.sfx, tts: S.tts }; store.save(); }
+function saveSettings() { store.d.set = { players: S.players, names: S.names, mode: S.mode, rounds: S.rounds, diff: S.diff, set: S.set, level: S.level, sfx: S.sfx, tts: S.tts }; store.save(); }
 
 /* ---------- 소리 ---------- */
 let ac = null;
@@ -383,12 +448,14 @@ function activeNames() {
   if (S.players === 1) return ['나'];
   return Array.from({ length: S.players }, (_, i) => (S.names[i] || '').trim() || (i + 1) + '인');
 }
-function poolWords() { return WORDS.filter(w => S.set === 'all' || String(w.s) === S.set); }
+function wordsFor(setId, levelId) { const L = levelOf(levelId); return WORDS.filter(w => (setId === 'all' || String(w.s) === setId) && w.w.length >= L.min && w.w.length <= L.max); }
+const countFor = (setId, levelId) => wordsFor(setId, levelId).length;
+function poolWords() { return wordsFor(S.set, S.level); }
 function startGame() {
   ensureAudio();
   const names = activeNames();
   G = {
-    mode: S.mode, diff: S.diff, rounds: S.rounds, set: S.set,
+    mode: S.mode, diff: S.diff, rounds: S.rounds, set: S.set, level: S.level,
     players: names.map(n => ({ name: n, lives: CONFIG.lives, score: 0, correct: 0, boom: 0, combo: 0, bestCombo: 0, hints: CONFIG.hintsPerPlayer, alive: true, turns: 0 })),
     cur: 0, pool: [], last: null, missed: new Map(), elim: [],
     phase: 'pass', passT: 0, passDur: 1, t: 0, total: 1, lastSec: 99,
@@ -616,8 +683,8 @@ function showResult() {
   const title = solo ? (G.mode === 'round' ? '🎉 라운드 클리어!' : '💥 게임 종료') : '🏆 ' + esc(win.name) + ' 우승!';
   const rows = order.map((i, r) => { const p = G.players[i]; return `<tr class="${r === 0 && !solo ? 'w' : ''}"><td>${['🥇', '🥈', '🥉', '4'][r] || r + 1}</td><td>${esc(p.name)}</td><td>${p.score}</td><td>${p.correct}</td><td>${p.boom}</td><td>${p.bestCombo}</td></tr>`; }).join('');
   const rv = [...G.missed.values()].map(m => `<div class="rv"><div class="tx"><div class="en">${esc(m.w.w)}</div><div class="ko">${esc(m.w.ko)}${m.boom ? ' · 💥 ' + m.boom : ''}${m.wrong ? ' · ✗ ' + m.wrong : ''}</div></div><button class="say" data-say="${esc(m.w.w)}">🔊</button></div>`).join('') || '<div class="rv"><div class="tx"><div class="en">🎉 틀린 단어가 없어요!</div></div></div>';
-  if (solo) { const k = G.set + '-' + G.diff + '-' + G.mode; const b = store.d.best[k] || 0; if (G.players[0].correct > b) { store.d.best[k] = G.players[0].correct; store.save(); } }
-  const bestNote = solo ? `<div class="sub">이 설정의 최고 기록: 맞힌 단어 ${store.d.best[G.set + '-' + G.diff + '-' + G.mode] || 0}개</div>` : '';
+  if (solo) { const k = G.set + '-' + G.diff + '-' + G.mode + (G.level && G.level !== 'all' ? '-' + G.level : ''); const b = store.d.best[k] || 0; if (G.players[0].correct > b) { store.d.best[k] = G.players[0].correct; store.save(); } }
+  const bestNote = solo ? `<div class="sub">이 설정의 최고 기록: 맞힌 단어 ${store.d.best[G.set + '-' + G.diff + '-' + G.mode + (G.level && G.level !== 'all' ? '-' + G.level : '')] || 0}개</div>` : '';
   $('#resultBox').innerHTML = `<h2>${title}</h2><div class="sub">${esc(SETS.find(s => s.id === G.set).title)} · ${DIFF[G.diff].label} · ${G.mode === 'round' ? '라운드제' : '서바이벌'}</div>${bestNote}
     <table class="rank"><tr><th></th><th>이름</th><th>점수</th><th>맞힌 단어</th><th>💥 폭발</th><th>최고 콤보</th></tr>${rows}</table>
     <b>다시 볼 단어 (폭발 · 오답 · 힌트)</b><div class="rvl">${rv}</div>
@@ -681,7 +748,10 @@ function renderMenu() {
   $('#segDiff').innerHTML = Object.entries(DIFF).map(([k, d]) => `<button data-d="${k}" class="${S.diff === k ? 'on' : ''}">${d.label}</button>`).join('');
   $('#segDiff').querySelectorAll('button').forEach(b => b.onclick = () => { S.diff = b.dataset.d; saveSettings(); renderMenu(); });
   $('#ddDiff').textContent = DIFF[S.diff].desc;
-  $('#chipSets').innerHTML = SETS.map(s => { const n = s.id === 'all' ? WORDS.length : WORDS.filter(w => String(w.s) === s.id).length; return `<button data-s="${s.id}" class="${S.set === s.id ? 'on' : ''}">${esc(s.title)}<small>${esc(s.sub)} · ${n}단어</small></button>`; }).join('');
+  if (countFor(S.set, S.level) < 3) { S.level = 'all'; saveSettings(); }
+  $('#chipLevels').innerHTML = LEVELS.map(l => { const n = countFor(S.set, l.id); return `<button data-l="${l.id}" ${n < 3 ? 'disabled' : ''} class="${S.level === l.id ? 'on' : ''}">${l.label}<small>${levelDesc(l)}, ${n}단어</small></button>`; }).join('');
+  $('#chipLevels').querySelectorAll('button').forEach(b => b.onclick = () => { S.level = b.dataset.l; saveSettings(); renderMenu(); });
+  $('#chipSets').innerHTML = SETS.map(s => { const n = countFor(s.id, S.level); return `<button data-s="${s.id}" ${n < 3 ? 'disabled' : ''} class="${S.set === s.id ? 'on' : ''}">${esc(s.title)}<small>${esc(s.sub)} · ${n}단어</small></button>`; }).join('');
   $('#chipSets').querySelectorAll('button').forEach(b => b.onclick = () => { S.set = b.dataset.s; saveSettings(); renderMenu(); });
   renderToggles();
 }
